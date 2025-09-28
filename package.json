@@ -1,5 +1,6 @@
 {
   "name": "dev-meetup",
+  "module": "cjs",
   "version": "1.0.0",
   "description": "meetup app for devs",
   "main": "index.js",
@@ -10,6 +11,7 @@
   "author": "Abhishek Bajpai",
   "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "mongoose": "^8.18.2"
   }
 }
