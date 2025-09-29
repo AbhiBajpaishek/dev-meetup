@@ -54,7 +54,8 @@ app.patch(
     const id = req.params.userId;
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { ...userBody }
+      { ...userBody },
+      { returnDocument: "after" }
     );
     res.json({ status: "ok", data: { ...updatedUser } });
   })
