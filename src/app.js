@@ -37,12 +37,26 @@ app.get(
   })
 );
 
+// delete a user
 app.delete(
   "/user",
   asyncHandler(async (req, res) => {
     const id = req.body.userId;
     await User.findByIdAndDelete(id);
     res.json({ status: "Ok", data: {} });
+  })
+);
+
+app.patch(
+  "/user/:userId",
+  asyncHandler(async (req, res) => {
+    const userBody = req.body;
+    const id = req.params.userId;
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { ...userBody }
+    );
+    res.json({ status: "ok", data: { ...updatedUser } });
   })
 );
 
