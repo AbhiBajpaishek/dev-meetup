@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 const db = require("./config/database");
 const User = require("./models/user");
 const asyncHandler = require("./middlewares/errorHandler");
-const {userAuth} = require("./middlewares/auth");
+const { userAuth } = require("./middlewares/auth");
 const signUpRequestValidator = require("./utils/validators");
 
 const app = express();
@@ -28,7 +28,7 @@ const logic = async (req, res) => {
   }
 };
 
-app.get("/user",userAuth, asyncHandler(logic));
+app.get("/user", userAuth, asyncHandler(logic));
 
 // get all users from DB
 app.get(
@@ -148,12 +148,14 @@ app.post(
     if (!isCorrect) throw new Error("Invalid credentials!");
 
     // generate JWT
-    const token = jwt.sign({ _id: user._id }, "secret");
+    const token = jwt.sign({ _id: user._id }, "secret", { expiresIn: "1h" });
 
-    res.cookie("jwt", token).json({
-      status: "Ok",
-      message: "Login Successfull",
-    });
+    res
+      .cookie("jwt", token, { expires: new Date(Date.now() + 1 * 3600000) }) // 1 sec = 1000ms, 1 min =  60,000msg, 1hr= 36,00,000ms
+      .json({
+        status: "Ok",
+        message: "Login Successfull",
+      });
   })
 );
 
