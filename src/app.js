@@ -53,6 +53,27 @@ app.patch(
   asyncHandler(async (req, res) => {
     const userBody = req.body;
     const id = req.params.userId;
+
+    const ALLOWED_FIELDS = [
+      "firstName",
+      "lastName",
+      "password",
+      "age",
+      "gender",
+      "skills",
+    ];
+    const notAllowedFields = Object.keys(userBody).filter(
+      (field) => !ALLOWED_FIELDS.includes(field)
+    );
+    if (notAllowedFields.length > 0) {
+      throw new Error(
+        "Bad Request. Fields not allowed: " + notAllowedFields.toString()
+      );
+    }
+
+    // validate size of skills fiel
+    const skills = userBody.skills;
+    if(skills && skills.length > 10) throw new Error("Bad Request: Skills length cannot be more than 10")
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...userBody },
@@ -65,16 +86,29 @@ app.patch(
 app.post(
   "/signup",
   asyncHandler(async (req, res) => {
-    const { firstName, lastName, emailId, password, age, gender, skills } = req.body;
-    const newUser = new User({
-      firstName,
-      lastName,
-      emailId,
-      password,
-      age,
-      gender,
-      skills
-    });
+    const ALLOWED_FIELDS = [
+      "firstName",
+      "emailId",
+      "lastName",
+      "password",
+      "age",
+      "gender",
+      "skills",
+    ];
+    const notAllowedFields = Object.keys(req.body).filter(
+      (field) => !ALLOWED_FIELDS.includes(field)
+    );
+    if (notAllowedFields.length > 0) {
+      throw new Error(
+        "Bad Request. Fields not allowed: " + notAllowedFields.toString()
+      );
+    }
+
+    // validate size of skills fiel
+    const skills = req.body.skills;
+    if(skills && skills.length > 10) throw new Error("Bad Request: Skills length cannot be more than 10")
+
+    const newUser = new User(req.body);
     await newUser.save();
     res.json({ "Status:": "Ok", data: { ...newUser } });
   })
