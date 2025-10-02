@@ -61,6 +61,7 @@ app.patch(
       "age",
       "gender",
       "skills",
+      "photoUrl"
     ];
     const notAllowedFields = Object.keys(userBody).filter(
       (field) => !ALLOWED_FIELDS.includes(field)
@@ -94,6 +95,7 @@ app.post(
       "age",
       "gender",
       "skills",
+      "photoUrl"
     ];
     const notAllowedFields = Object.keys(req.body).filter(
       (field) => !ALLOWED_FIELDS.includes(field)
