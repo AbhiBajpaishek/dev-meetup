@@ -1,163 +1,21 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const db = require("./config/database");
-const User = require("./models/user");
-const asyncHandler = require("./middlewares/errorHandler");
-const { userAuth } = require("./middlewares/auth");
-const signUpRequestValidator = require("./utils/validators");
 
 const app = express();
 // express.json() reads body from req and extracts if body has JSON object and translates it into JS code
 app.use(express.json());
 app.use(cookieParser());
 
-// get user by email
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestsRouter = require("./routes/requests");
+const userRouter = require("./routes/user");
 
-const logic = async (req, res) => {
-  const { emailId: userEmail } = req.body;
-  const user = await User.findOne({ emailId: userEmail });
-  if (!user) {
-    res.status(404).json({
-      status: "Error",
-      data: {},
-    });
-  } else {
-    res.json({ status: "Ok", data: { ...user } });
-  }
-};
-
-app.get("/user", userAuth, asyncHandler(logic));
-
-// get all users from DB
-app.get(
-  "/feed",
-  asyncHandler(async (req, res) => {
-    const users = await User.find({});
-    res.json({ status: "Ok", data: { ...users } });
-  })
-);
-
-// delete a user
-app.delete(
-  "/user",
-  userAuth,
-  asyncHandler(async (req, res) => {
-    const id = req.body.userId;
-    await User.findByIdAndDelete(id);
-    res.json({ status: "Ok", data: {} });
-  })
-);
-
-// update user with _id
-app.patch(
-  "/user/:userId",
-  userAuth,
-  asyncHandler(async (req, res) => {
-    const userBody = req.body;
-    const id = req.params.userId;
-
-    const ALLOWED_FIELDS = [
-      "firstName",
-      "lastName",
-      "password",
-      "age",
-      "gender",
-      "skills",
-      "photoUrl",
-    ];
-    const notAllowedFields = Object.keys(userBody).filter(
-      (field) => !ALLOWED_FIELDS.includes(field)
-    );
-    if (notAllowedFields.length > 0) {
-      throw new Error(
-        "Bad Request. Fields not allowed: " + notAllowedFields.toString()
-      );
-    }
-
-    // validate size of skills fiel
-    const skills = userBody.skills;
-    if (skills && skills.length > 10)
-      throw new Error("Bad Request: Skills length cannot be more than 10");
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { ...userBody },
-      { returnDocument: "after", runValidators: true }
-    );
-    res.json({ status: "ok", data: { ...updatedUser } });
-  })
-);
-
-app.post(
-  "/signup",
-  asyncHandler(async (req, res) => {
-    // signup request validation
-    signUpRequestValidator(req);
-
-    // Password encryption
-    const password = await bcrypt.hash(req.body.password, 10);
-
-    const {
-      firstName,
-      lastName,
-      emailId,
-      skills,
-      photoUrl,
-      age,
-      gender,
-      about,
-    } = req.body;
-    const newUser = new User({
-      firstName,
-      lastName,
-      gender,
-      age,
-      emailId,
-      password,
-      photoUrl,
-      skills,
-      about,
-    });
-    await newUser.save();
-    res.json({ "Status:": "Ok", data: { ...newUser } });
-  })
-);
-
-app.get(
-  "/profile",
-  userAuth,
-  asyncHandler(async (req, res) => {
-    const user = req.user;
-    res.json({
-      status: "Ok",
-      data: { ...user },
-    });
-  })
-);
-
-app.post(
-  "/login",
-  asyncHandler(async (req, res) => {
-    const { emailId, password } = req.body;
-
-    const user = await User.findOne({ emailId: emailId });
-    if (!user) throw new Error("Invalid credentials!");
-
-    const isCorrect = await user.validatePassword(password);
-    if (!isCorrect) throw new Error("Invalid credentials!");
-
-    // generate JWT
-    const token = await user.generateJwt();
-
-    res
-      .cookie("jwt", token, { expires: new Date(Date.now() + 1 * 3600000) }) // 1 sec = 1000ms, 1 min =  60,000msg, 1hr= 36,00,000ms
-      .json({
-        status: "Ok",
-        message: "Login Successfull",
-      });
-  })
-);
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestsRouter);
+app.use("/", userRouter);
 
 db.connectDB()
   .then(() => {

@@ -7,7 +7,7 @@ const asyncHandler = (fn) => {
       res.json({
         status: "Error",
         error: {
-            message: err.message
+          message: err.message,
         },
       });
     }
@@ -16,4 +16,4 @@ const asyncHandler = (fn) => {
   return callback;
 };
 
-module.exports = asyncHandler;
+module.exports = { asyncHandler };
