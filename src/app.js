@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const db = require("./config/database");
 const User = require("./models/user");
 const asyncHandler = require("./middlewares/errorHandler");
+const {userAuth} = require("./middlewares/auth");
 const signUpRequestValidator = require("./utils/validators");
 
 const app = express();
@@ -27,11 +28,7 @@ const logic = async (req, res) => {
   }
 };
 
-app.get("/user", asyncHandler(logic));
-app.get(
-  "/user:id",
-  asyncHandler((req, res) => {})
-);
+app.get("/user",userAuth, asyncHandler(logic));
 
 // get all users from DB
 app.get(
@@ -45,6 +42,7 @@ app.get(
 // delete a user
 app.delete(
   "/user",
+  userAuth,
   asyncHandler(async (req, res) => {
     const id = req.body.userId;
     await User.findByIdAndDelete(id);
@@ -55,6 +53,7 @@ app.delete(
 // update user with _id
 app.patch(
   "/user/:userId",
+  userAuth,
   asyncHandler(async (req, res) => {
     const userBody = req.body;
     const id = req.params.userId;
@@ -127,12 +126,9 @@ app.post(
 
 app.get(
   "/profile",
+  userAuth,
   asyncHandler(async (req, res) => {
-    const jwtCookie = req.cookies["jwt"];
-    // validate token
-    const payload = jwt.verify(jwtCookie, "secret");
-
-    const user = await User.findById(payload._id);
+    const user = req.user;
     res.json({
       status: "Ok",
       data: { ...user },
