@@ -1,5 +1,7 @@
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const db = require("./config/database");
 const User = require("./models/user");
 const asyncHandler = require("./middlewares/errorHandler");
@@ -8,6 +10,7 @@ const signUpRequestValidator = require("./utils/validators");
 const app = express();
 // express.json() reads body from req and extracts if body has JSON object and translates it into JS code
 app.use(express.json());
+app.use(cookieParser());
 
 // get user by email
 
@@ -122,15 +125,36 @@ app.post(
   })
 );
 
+app.get(
+  "/profile",
+  asyncHandler(async (req, res) => {
+    const jwtCookie = req.cookies["jwt"];
+    // validate token
+    const payload = jwt.verify(jwtCookie, "secret");
+
+    const user = await User.findById(payload._id);
+    res.json({
+      status: "Ok",
+      data: { ...user },
+    });
+  })
+);
+
 app.post(
   "/login",
   asyncHandler(async (req, res) => {
     const { emailId, password } = req.body;
+
     const user = await User.findOne({ emailId: emailId });
     if (!user) throw new Error("Invalid credentials!");
+
     const isCorrect = await bcrypt.compare(password, user.password);
     if (!isCorrect) throw new Error("Invalid credentials!");
-    res.json({
+
+    // generate JWT
+    const token = jwt.sign({ _id: user._id }, "secret");
+
+    res.cookie("jwt", token).json({
       status: "Ok",
       message: "Login Successfull",
     });
