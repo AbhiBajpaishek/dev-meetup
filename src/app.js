@@ -1,7 +1,9 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
 const db = require("./config/database");
 const User = require("./models/user");
 const asyncHandler = require("./middlewares/errorHandler");
+const signUpRequestValidator = require("./utils/validators");
 
 const app = express();
 // express.json() reads body from req and extracts if body has JSON object and translates it into JS code
@@ -61,7 +63,7 @@ app.patch(
       "age",
       "gender",
       "skills",
-      "photoUrl"
+      "photoUrl",
     ];
     const notAllowedFields = Object.keys(userBody).filter(
       (field) => !ALLOWED_FIELDS.includes(field)
@@ -74,7 +76,8 @@ app.patch(
 
     // validate size of skills fiel
     const skills = userBody.skills;
-    if(skills && skills.length > 10) throw new Error("Bad Request: Skills length cannot be more than 10")
+    if (skills && skills.length > 10)
+      throw new Error("Bad Request: Skills length cannot be more than 10");
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...userBody },
@@ -87,32 +90,50 @@ app.patch(
 app.post(
   "/signup",
   asyncHandler(async (req, res) => {
-    const ALLOWED_FIELDS = [
-      "firstName",
-      "emailId",
-      "lastName",
-      "password",
-      "age",
-      "gender",
-      "skills",
-      "photoUrl"
-    ];
-    const notAllowedFields = Object.keys(req.body).filter(
-      (field) => !ALLOWED_FIELDS.includes(field)
-    );
-    if (notAllowedFields.length > 0) {
-      throw new Error(
-        "Bad Request. Fields not allowed: " + notAllowedFields.toString()
-      );
-    }
+    // signup request validation
+    signUpRequestValidator(req);
 
-    // validate size of skills fiel
-    const skills = req.body.skills;
-    if(skills && skills.length > 10) throw new Error("Bad Request: Skills length cannot be more than 10")
+    // Password encryption
+    const password = await bcrypt.hash(req.body.password, 10);
 
-    const newUser = new User(req.body);
+    const {
+      firstName,
+      lastName,
+      emailId,
+      skills,
+      photoUrl,
+      age,
+      gender,
+      about,
+    } = req.body;
+    const newUser = new User({
+      firstName,
+      lastName,
+      gender,
+      age,
+      emailId,
+      password,
+      photoUrl,
+      skills,
+      about,
+    });
     await newUser.save();
     res.json({ "Status:": "Ok", data: { ...newUser } });
+  })
+);
+
+app.post(
+  "/login",
+  asyncHandler(async (req, res) => {
+    const { emailId, password } = req.body;
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) throw new Error("Invalid credentials!");
+    const isCorrect = await bcrypt.compare(password, user.password);
+    if (!isCorrect) throw new Error("Invalid credentials!");
+    res.json({
+      status: "Ok",
+      message: "Login Successfull",
+    });
   })
 );
 
