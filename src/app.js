@@ -144,11 +144,11 @@ app.post(
     const user = await User.findOne({ emailId: emailId });
     if (!user) throw new Error("Invalid credentials!");
 
-    const isCorrect = await bcrypt.compare(password, user.password);
+    const isCorrect = await user.validatePassword(password);
     if (!isCorrect) throw new Error("Invalid credentials!");
 
     // generate JWT
-    const token = jwt.sign({ _id: user._id }, "secret", { expiresIn: "1h" });
+    const token = await user.generateJwt();
 
     res
       .cookie("jwt", token, { expires: new Date(Date.now() + 1 * 3600000) }) // 1 sec = 1000ms, 1 min =  60,000msg, 1hr= 36,00,000ms

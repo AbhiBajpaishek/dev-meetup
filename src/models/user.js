@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const validator = require("validator");
 
 // create user schema for creating a model
@@ -26,7 +28,8 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       validate(pass) {
-        if (!validator.isStrongPassword(pass)) throw new Error("Please Enter strong password " + pass);
+        if (!validator.isStrongPassword(pass))
+          throw new Error("Please Enter strong password " + pass);
       },
     },
     age: {
@@ -51,13 +54,31 @@ const userSchema = new mongoose.Schema(
         if (!validator.isURL(url)) throw new Error(url);
       },
     },
-    about:{
+    about: {
       type: String,
-      default: "This is default about information"
-    }
+      default: "This is default about information",
+    },
   },
   { timestamps: true }
 );
+
+userSchema.methods.generateJwt = async function () {
+  const user = this;
+  // generate JWT
+  const token = jwt.sign({ _id: user._id }, "secret", { expiresIn: "1h" });
+  return token;
+};
+
+userSchema.methods.validatePassword = async function (passwordToValidate) {
+  const user = this;
+  const userPasswordHash = user.password;
+  // generate JWT
+  const isValidPassword = await bcrypt.compare(
+    passwordToValidate,
+    userPasswordHash
+  );
+  return isValidPassword;
+};
 
 // creating a model of userSchema. Models should start from Capital Letters by best standards
 const User = mongoose.model("User", userSchema);
