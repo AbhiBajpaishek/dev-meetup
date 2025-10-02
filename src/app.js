@@ -7,7 +7,7 @@ const app = express();
 // express.json() reads body from req and extracts if body has JSON object and translates it into JS code
 app.use(express.json());
 
-//get user by email
+// get user by email
 
 const logic = async (req, res) => {
   const { emailId: userEmail } = req.body;
@@ -47,6 +47,7 @@ app.delete(
   })
 );
 
+// update user with _id
 app.patch(
   "/user/:userId",
   asyncHandler(async (req, res) => {
@@ -55,23 +56,29 @@ app.patch(
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...userBody },
-      { returnDocument: "after" }
+      { returnDocument: "after", runValidators: true }
     );
     res.json({ status: "ok", data: { ...updatedUser } });
   })
 );
 
-app.post("/signup", async (req, res) => {
-  const { firstName, lastName, emailId, password } = req.body;
-  const newUser = new User({
-    firstName,
-    lastName,
-    emailId,
-    password,
-  });
-  await newUser.save();
-  res.json({ "Status:": "Ok", data: { ...newUser } });
-});
+app.post(
+  "/signup",
+  asyncHandler(async (req, res) => {
+    const { firstName, lastName, emailId, password, age, gender, skills } = req.body;
+    const newUser = new User({
+      firstName,
+      lastName,
+      emailId,
+      password,
+      age,
+      gender,
+      skills
+    });
+    await newUser.save();
+    res.json({ "Status:": "Ok", data: { ...newUser } });
+  })
+);
 
 db.connectDB()
   .then(() => {
