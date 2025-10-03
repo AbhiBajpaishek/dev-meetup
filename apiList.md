@@ -19,5 +19,5 @@
 ## Connections
  - POST /connection/interested
  - POST /connection/ignored
- - POST /connection/accepted
- - POST /connection/rejected
+ - POST /connection/review/accepted
+ - POST /connection/review/rejected
