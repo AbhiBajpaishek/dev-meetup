@@ -20,6 +20,8 @@ const connectionRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+connectionRequestSchema.index({ toId: 1, fromId: 1 });
+
 connectionRequestSchema.pre("save", function (next) {
   const connectionRequest = this;
   if (connectionRequest.toId.equals(connectionRequest.fromId)) {
