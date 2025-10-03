@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const { asyncHandler } = require("../middlewares/errorHandler");
-const signUpRequestValidator = require("../utils/validators");
+const {signUpRequestValidator} = require("../utils/validators");
 const User = require("../models/user");
 
 const authRouter = express.Router();
@@ -61,6 +61,16 @@ authRouter.post(
         status: "Ok",
         message: "Login Successfull",
       });
+  })
+);
+
+authRouter.post(
+  "/logout",
+  asyncHandler(async (req, res) => {
+    res.cookie("jwt", null, { expires: new Date(Date.now()) }).json({
+      status: "Ok",
+      message: "Logout Successfull",
+    });
   })
 );
 

@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const { asyncHandler } = require("../middlewares/errorHandler");
 const { userAuth } = require("../middlewares/auth");
+const { profileUpdateRequestValidator } = require("../utils/validators");
 
 const profileRouter = Router();
 
@@ -18,40 +19,20 @@ profileRouter.get(
 
 // update user with _id
 profileRouter.patch(
-  "/profile/:userId",
+  "/profile/edit/",
   userAuth,
   asyncHandler(async (req, res) => {
-    const userBody = req.body;
-    const id = req.params.userId;
+    const loggedInUser = req.user; // injected during userAuth middleware
+    const userRequest = req.body;
 
-    const ALLOWED_FIELDS = [
-      "firstName",
-      "lastName",
-      "password",
-      "age",
-      "gender",
-      "skills",
-      "photoUrl",
-    ];
-    const notAllowedFields = Object.keys(userBody).filter(
-      (field) => !ALLOWED_FIELDS.includes(field)
-    );
-    if (notAllowedFields.length > 0) {
-      throw new Error(
-        "Bad Request. Fields not allowed: " + notAllowedFields.toString()
-      );
-    }
+    // validate req body
+    profileUpdateRequestValidator(req);
 
-    // validate size of skills field
-    const skills = userBody.skills;
-    if (skills && skills.length > 10)
-      throw new Error("Bad Request: Skills length cannot be more than 10");
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      { ...userBody },
-      { returnDocument: "after", runValidators: true }
+    Object.keys(userRequest).forEach(
+      (key) => (loggedInUser[key] = userRequest[key])
     );
-    res.json({ status: "ok", data: { ...updatedUser } });
+    await loggedInUser.save();
+    res.json({ status: "ok", data: { ...loggedInUser } });
   })
 );
 

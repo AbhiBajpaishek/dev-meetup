@@ -38,4 +38,29 @@ const signUpRequestValidator = (req) => {
   }
 };
 
-module.exports = signUpRequestValidator;
+const profileUpdateRequestValidator = (req) => {
+  const userBody = req.body;
+  const ALLOWED_FIELDS = [
+    "firstName",
+    "lastName",,
+    "age",
+    "gender",
+    "skills",
+    "photoUrl",
+  ];
+  const notAllowedFields = Object.keys(userBody).filter(
+    (field) => !ALLOWED_FIELDS.includes(field)
+  );
+  if (notAllowedFields.length > 0) {
+    throw new Error(
+      "Bad Request. Fields not allowed: " + notAllowedFields.toString()
+    );
+  }
+
+  // validate size of skills field
+  const skills = userBody.skills;
+  if (skills && skills.length > 10)
+    throw new Error("Bad Request: Skills length cannot be more than 10");
+};
+
+module.exports = { signUpRequestValidator, profileUpdateRequestValidator };
