@@ -1,4 +1,6 @@
 const { Router } = require("express");
+const bcrypt = require("bcrypt");
+const validator = require("validator");
 const { asyncHandler } = require("../middlewares/errorHandler");
 const { userAuth } = require("../middlewares/auth");
 const { profileUpdateRequestValidator } = require("../utils/validators");
@@ -13,6 +15,36 @@ profileRouter.get(
     res.json({
       status: "Ok",
       data: { ...user },
+    });
+  })
+);
+profileRouter.patch(
+  "/profile/password",
+  userAuth,
+  asyncHandler(async (req, res) => {
+    const loggedInUser = req.user;
+    const { oldPassword, newPassword } = req.body;
+    console.log("loggedInUser: ", loggedInUser);
+    const isCorrect = await bcrypt.compare(oldPassword, loggedInUser.password);
+
+    console.log("isCorrect: ", isCorrect);
+    // check if newPassword is strong
+    const isStrong = isCorrect && validator.isStrongPassword(newPassword);
+    if (isStrong) {
+      const newPasswordHash = await bcrypt.hash(newPassword, 10);
+      loggedInUser.password = newPasswordHash;
+      await loggedInUser.save();
+      return res.json({
+        status: "Ok",
+        message: "Password Changed Successfully",
+      });
+    }
+
+    res.json({
+      status: "Ok",
+      message: isCorrect
+        ? "Please enter strong new password"
+        : "Invalid Credentials!!",
     });
   })
 );
