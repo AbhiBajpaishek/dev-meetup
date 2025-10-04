@@ -56,4 +56,47 @@ connectionRouter.post(
   })
 );
 
+connectionRouter.post(
+  "/connection/review/:status/:id",
+  userAuth,
+  asyncHandler(async (req, res) => {
+    const { status, id: fromId } = req.params;
+    const toId = req.user._id;
+
+    // validate request
+    const ALLOWED_STATUS = ["accepted", "rejected"];
+
+    const validStatus = ALLOWED_STATUS.includes(status.toLowerCase());
+
+    if (!validStatus) {
+      return res.status(400).json({
+        status: "Error",
+        message: "Invalid Status: " + status,
+      });
+    }
+
+    const connectionRequest = await ConnectionRequest.findOne({
+      toId,
+      fromId,
+      status: "interested", // we dont want to allow review is status is other than interested
+    });
+    if (!connectionRequest) {
+      return res.status(404).json({
+        status: "Error",
+        message: "Connection not found!",
+      });
+    }
+
+    connectionRequest.status = status;
+    await connectionRequest.save();
+    return res.json({
+      status: "Ok",
+      message:
+        status === "accepted"
+          ? "Request Accepted Succesfully!"
+          : "Request Rejected Succesfully",
+    });
+  })
+);
+
 module.exports = connectionRouter;
