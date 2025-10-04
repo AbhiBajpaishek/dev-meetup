@@ -5,10 +5,12 @@ const connectionRequestSchema = new mongoose.Schema(
     fromId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "User"
     },
     toId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "User"
     },
     status: {
       type: String,
@@ -25,15 +27,13 @@ connectionRequestSchema.index({ toId: 1, fromId: 1 });
 connectionRequestSchema.pre("save", function (next) {
   const connectionRequest = this;
   if (connectionRequest.toId.equals(connectionRequest.fromId)) {
-    return resizeBy
-      .status(400)
-      .json({ status: "Error", message: "Cannot send self request" });
+    throw new Error("Cannot send self request");
   }
   next();
 });
 
 const ConnectionRequestModel = new mongoose.model(
-  "ConnetionRequest",
+  "ConnectionRequest",
   connectionRequestSchema
 );
 
